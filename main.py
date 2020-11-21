@@ -76,12 +76,28 @@ class Meteor(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.meteor_img = meteor_image()
-        self.image = random.choice(self.meteor_img)
+        self.original_image = random.choice(self.meteor_img)  # original image use to rotate
+        self.image = self.original_image.copy()
         self.rect = self.image.get_rect()
+        self.rect_center = (WITDH/2, HEIGTH/2)
         self.rect.x = random.randrange(0, WITDH - 30)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
         self.speed_x = random.randrange(-3, 3)
+        self.last_rotation = pygame.time.get_ticks()  # Keeps travks of time in milliseconds
+        self.rotation_degree = 0  # initial degree of rotation
+        self.rotation_speed = 5
+
+    def rotate(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_rotation > 20:
+            # rotate the meteor
+            self.last_rotation = current_time
+            self.rotation_degree += self.rotation_speed
+            old_center = self.rect.center
+            self.image = pygame.transform.rotate(self.original_image, self.rotation_degree)
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
 
     def spawn_new_meteor(self):
         self.rect.x = random.randrange(0, WITDH - 30)
@@ -97,6 +113,7 @@ class Meteor(pygame.sprite.Sprite):
         self.rect.y += self.speed_y
         self.rect.x += self.speed_x
         self.boundary()
+        self.rotate()
 
 
 class Bullet(pygame.sprite.Sprite):
