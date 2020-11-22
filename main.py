@@ -44,6 +44,17 @@ class Player(pygame.sprite.Sprite):
         self.speed_x = 0
         self.speed = 3
         self.last_bullet_shot = pygame.time.get_ticks()
+        self.health = 100
+        self.lives = 3
+        self.hide_ship_timer = pygame.time.get_ticks()
+        self.ship_is_hidden = False
+
+    def hide_ship(self):
+        """move the ship off the screen for a certain time"""
+        self.hide_ship_timer = pygame.time.get_ticks()
+        self.ship_is_hidden = True
+        self.rect.centerx = int(WITDH/2)
+        self.rect.y = HEIGTH + 100
 
     def shoot_bullet(self):
         """Create and shoot a bullet when the space is pressed."""
@@ -74,6 +85,11 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.speed_x
 
     def update(self, *args):
+        """Check if the ship is currently off the screen. Respawn after 1.5 seconds."""
+        if self.ship_is_hidden and pygame.time.get_ticks() - self.hide_ship_timer > 3500:
+            self.ship_is_hidden = False
+            self.rect.centerx = int(WITDH/2)
+            self.rect.bottom = HEIGTH-10
         self.movement()
         self.boundary()
 
@@ -88,7 +104,7 @@ class Meteor(pygame.sprite.Sprite):
         self.image = self.original_image.copy()
         self.rect = self.image.get_rect()
         self.surface = self.image.get_width()
-        self.radius = int(self.surface * .95 / 2)
+        self.radius = int(self.surface * .85 / 2)
         self.rect.x = random.randrange(0, WITDH - self.surface)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
@@ -219,17 +235,13 @@ def laser_explosion():
 
 
 def small_explosion():
-    small_explosion_img = []  # When the meteor hit the ship
-    for explosion00 in range(1, 9):
-        img = get_image("spaceshipexplosionFile/000{}.png".format(explosion00), WHITE)
-        small_explosion_img.append(img)
-    for explosion1 in range(0, 9):
-        img = get_image("spaceshipexplosionFile/001{}.png".format(explosion1), WHITE)
-        small_explosion_img.append(img)
-    for explosion2 in range(0, 9):
-        img = get_image("spaceshipexplosionFile/002{}.png".format(explosion2), WHITE)
-        small_explosion_img.append(img)
-    return small_explosion_img
+    """
+    When the meteor hit the ship
+    :return: a list of explosion images.
+    """
+    img_path = "smallexplosionFile/00{}.png"
+    return [get_image(img_path.format("0" + str(i)), WHITE) if i <= 9 else get_image(img_path.format(i), WHITE)
+            for i in range(1, 12)]
 
 
 def ship_explosion():
@@ -273,8 +285,21 @@ while running:
     all_sprites.update()
 
     # Check to see if any meteors hit the ship:
-    meteor_collision = pygame.sprite.spritecollide(player, all_meteors, False, pygame.sprite.collide_circle)
-    if meteor_collision:
+    meteor_collision = pygame.sprite.spritecollide(player, all_meteors, True, pygame.sprite.collide_circle)
+    for hit in meteor_collision:
+        explosion = Explosion(small_explosion(), player.rect.center)
+        all_sprites.add(explosion)
+        player.health -= hit.radius * 2
+        spawn_new_meteor()
+        if player.health <= 0:
+            final_explosion = Explosion(ship_explosion(), player.rect.center)
+            all_sprites.add(final_explosion)
+            player.hide_ship()
+            player.health = 100
+            player.lives -= 1
+
+    # End the game if the player is out of lives and explosion images are done.
+    if player.lives == 0 and final_explosion.alive():
         running = False
 
     # Check to see if the bullet hits a meteor:
@@ -289,6 +314,7 @@ while running:
     screen.blit(background, background_rect)
     all_sprites.draw(screen)
     message_to_screen("Score : " + str(score), RED, 24, int(WITDH / 2), 10)
+    message_to_screen("Health : " + str(player.health), RED, 24, 50, 10)
 
     # Update after drawing everything to the screen:
     pygame.display.update()
