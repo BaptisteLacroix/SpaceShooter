@@ -22,16 +22,22 @@ clock = pygame.time.Clock()
 FPS = 144
 game_folder = path.dirname(__file__)
 img_folder = path.join(game_folder, "img")
+score = 0
+font_name = pygame.font.match_font("comicsansms")
 
 
 # Game Classes
 
 class Player(pygame.sprite.Sprite):
+    """Attribute for the ship"""
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.transform.scale(player_img, (120, 50))
+        self.image = pygame.transform.scale(player_img, (80, 50))
         self.rect = self.image.get_rect()
+        self.surface = self.image.get_width()
+        self.radius = int(self.surface * .85 / 2)
+        # pygame.draw.circle(self.image, GREEN, self.rect.center, self.radius)
         self.rect.centerx = int(WITDH / 2)
         self.rect.bottom = HEIGTH - 20
         self.speed_x = 0
@@ -72,6 +78,7 @@ class Player(pygame.sprite.Sprite):
 
 
 class Meteor(pygame.sprite.Sprite):
+    """Atrtributes for the Meteors"""
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -79,8 +86,9 @@ class Meteor(pygame.sprite.Sprite):
         self.original_image = random.choice(self.meteor_img)  # original image use to rotate
         self.image = self.original_image.copy()
         self.rect = self.image.get_rect()
-        self.rect_center = (WITDH/2, HEIGTH/2)
-        self.rect.x = random.randrange(0, WITDH - 30)
+        self.surface = self.image.get_width()
+        self.radius = int(self.surface * .95 / 2)
+        self.rect.x = random.randrange(0, WITDH - self.surface)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
         self.speed_x = random.randrange(-3, 3)
@@ -94,13 +102,15 @@ class Meteor(pygame.sprite.Sprite):
             # rotate the meteor
             self.last_rotation = current_time
             self.rotation_degree += self.rotation_speed
+            self.image = pygame.transform.rotate(self.original_image, self.rotation_degree)
             old_center = self.rect.center
             self.image = pygame.transform.rotate(self.original_image, self.rotation_degree)
             self.rect = self.image.get_rect()
+            # pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
             self.rect.center = old_center
 
     def spawn_new_meteor(self):
-        self.rect.x = random.randrange(0, WITDH - 30)
+        self.rect.x = random.randrange(0, WITDH - self.surface)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
         self.speed_x = random.randrange(-3, 3)
@@ -133,6 +143,34 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Explosion(pygame.sprite.Sprite):
+
+    def __init__(self, explosion_size, center):
+        pygame.sprite.Sprite.__init__(self)
+        self.explosion_size = explosion_size
+        self.image = self.explosion_size[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.last_frame = pygame.time.get_ticks()
+        self.current_frame = 0
+
+    def update(self, *args):
+        """After a certain amount of time, dsipay the next image"""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_frame > 40:
+            self.last_frame = current_time
+            self.current_frame += 1
+            if self.current_frame == len(self.explosion_size):
+                """If the frame is egal to the len of the explosion size kill thr goup"""
+                self.kill()
+            else:
+                old_center = self.rect.center
+                self.image = self.explosion_size[self.current_frame]
+                self.image = pygame.transform.scale(self.image, (200, 200))
+                self.rect = self.image.get_rect()
+                self.rect.center = old_center
+
+
 # Game Functions
 def spawn_new_meteor():
     """Spawn a new meteor"""
@@ -148,13 +186,6 @@ def get_image(filename, colorkey=None):
     return img
 
 
-# Images:
-background = pygame.image.load(path.join(img_folder, "background.png")).convert()
-background_rect = background.get_rect()
-player_img = get_image("spaceship.png", BLACK)
-laser_img = get_image("laser.png", BLACK)
-
-
 def meteor_image():
     meteor_img = []  # list to store the meteor images
     for meteor_large_grey_a in range(0, 9):
@@ -168,6 +199,80 @@ def meteor_image():
         meteor_img.append(img)
     return meteor_img
 
+
+def message_to_screen(message, color, font_size, x, y):
+    """Display messages to the screen"""
+    font = pygame.font.SysFont(font_name, font_size)
+    text = font.render(message, True, color)
+    text_rect = text.get_rect()
+    text_rect.center = (x, y)
+    screen.blit(text, text_rect)
+
+
+# Explosion images
+
+def laser_explosion():
+    laser_explosion_img = []  # When the bullet hit the meteor
+    for explosion0 in range(1, 9):
+        img = get_image("spaceshipexplosionFile/000{}.png".format(explosion0), WHITE)
+        laser_explosion_img.append(img)
+    for explosion1 in range(0, 2):
+        img = get_image("spaceshipexplosionFile/001{}.png".format(explosion1), WHITE)
+        laser_explosion_img.append(img)
+    return laser_explosion_img
+
+
+def small_explosion():
+    small_explosion_img = []  # When the meteor hit the ship
+    for explosion00 in range(1, 9):
+        img = get_image("spaceshipexplosionFile/000{}.png".format(explosion00), WHITE)
+        small_explosion_img.append(img)
+    for explosion1 in range(0, 9):
+        img = get_image("spaceshipexplosionFile/001{}.png".format(explosion1), WHITE)
+        small_explosion_img.append(img)
+    for explosion2 in range(0, 9):
+        img = get_image("spaceshipexplosionFile/002{}.png".format(explosion2), WHITE)
+        small_explosion_img.append(img)
+    return small_explosion_img
+
+
+def ship_explosion():
+    ship_explosion_img = []  # Final explosion of the ship when it loses health
+    for explosion000 in range(1, 9):
+        img = get_image("finalexplosionFile/000{}.png".format(explosion000), WHITE)
+        ship_explosion_img.append(img)
+    for explosion1 in range(0, 9):
+        img = get_image("finalexplosionFile/001{}.png".format(explosion1), WHITE)
+        ship_explosion_img.append(img)
+    for explosion2 in range(0, 9):
+        img = get_image("finalexplosionFile/002{}.png".format(explosion2), WHITE)
+        ship_explosion_img.append(img)
+    for explosion3 in range(0, 9):
+        img = get_image("finalexplosionFile/003{}.png".format(explosion3), WHITE)
+        ship_explosion_img.append(img)
+    for explosion4 in range(0, 9):
+        img = get_image("finalexplosionFile/004{}.png".format(explosion4), WHITE)
+        ship_explosion_img.append(img)
+    for explosion5 in range(0, 9):
+        img = get_image("finalexplosionFile/005{}.png".format(explosion5), WHITE)
+        ship_explosion_img.append(img)
+    for explosion6 in range(0, 9):
+        img = get_image("finalexplosionFile/006{}.png".format(explosion6), WHITE)
+        ship_explosion_img.append(img)
+    for explosion7 in range(0, 9):
+        img = get_image("finalexplosionFile/007{}.png".format(explosion7), WHITE)
+        ship_explosion_img.append(img)
+    for explosion8 in range(0, 1):
+        img = get_image("finalexplosionFile/008{}.png".format(explosion8), WHITE)
+        ship_explosion_img.append(img)
+    return ship_explosion_img
+
+
+# Images:
+background = pygame.image.load(path.join(img_folder, "background.png")).convert()
+background_rect = background.get_rect()
+player_img = get_image("ships_blue.png", BLACK)
+laser_img = get_image("laser_red.png", BLACK)
 
 # Game Sprites
 all_sprites = pygame.sprite.Group()  # container for ALL the sprites
@@ -198,18 +303,22 @@ while running:
     all_sprites.update()
 
     # Check to see if any meteors hit the ship:
-    meteor_collision = pygame.sprite.spritecollide(player, all_meteors, False)
+    meteor_collision = pygame.sprite.spritecollide(player, all_meteors, False, pygame.sprite.collide_circle)
     if meteor_collision:
         running = False
 
     # Check to see if the bullet hits a meteor:
     bullet_collision = pygame.sprite.groupcollide(all_meteors, all_bullets, True, True)
-    for collision in bullet_collision:
+    for collision in bullet_collision:  # Collision loop in throw the list bullet_collision
+        explosion = Explosion(laser_explosion(), collision.rect.center)
+        all_sprites.add(explosion)
         spawn_new_meteor()
+        score += 70 - collision.radius
 
     # Draw to the screen
     screen.blit(background, background_rect)
     all_sprites.draw(screen)
+    message_to_screen("Score : " + str(score), RED, 24, int(WITDH / 2), 10)
 
     # Update after drawing everything to the screen:
     pygame.display.update()
