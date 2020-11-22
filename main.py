@@ -24,6 +24,7 @@ game_folder = path.dirname(__file__)
 img_folder = path.join(game_folder, "img")
 score = 0
 font_name = pygame.font.match_font("comicsansms")
+DELAY = 300
 
 
 # Game Classes
@@ -47,7 +48,7 @@ class Player(pygame.sprite.Sprite):
     def shoot_bullet(self):
         """Create and shoot a bullet when the space is pressed."""
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_bullet_shot > 200:
+        if current_time - self.last_bullet_shot > DELAY:
             self.last_bullet_shot = current_time
             bullet = Bullet(self.rect.centerx, self.rect.top)
             all_bullets.add(bullet)
@@ -82,7 +83,7 @@ class Meteor(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.meteor_img = meteor_image()
+        self.meteor_img = get_meteor_images()
         self.original_image = random.choice(self.meteor_img)  # original image use to rotate
         self.image = self.original_image.copy()
         self.rect = self.image.get_rect()
@@ -186,18 +187,14 @@ def get_image(filename, colorkey=None):
     return img
 
 
-def meteor_image():
-    meteor_img = []  # list to store the meteor images
-    for meteor_large_grey_a in range(0, 9):
-        img = get_image("large/a1000{}.png".format(meteor_large_grey_a), BLACK)
-        meteor_img.append(img)
-    for meteor_medium_grey_a in range(0, 9):
-        img = get_image("medium/a1000{}.png".format(meteor_medium_grey_a), BLACK)
-        meteor_img.append(img)
-    for meteor_small_grey_a in range(0, 9):
-        img = get_image("small/a1000{}.png".format(meteor_small_grey_a), BLACK)
-        meteor_img.append(img)
-    return meteor_img
+def get_meteor_images():
+    """
+    list to store the meteors images
+    :return: a list meteors images
+    """
+    meteors_sizes = ["large", "medium", "small"]  # list to store the sizes of the meteors
+    img_path = "{}/a1000{}.png"
+    return [get_image(img_path.format(size, j), BLACK) for size in meteors_sizes for j in range(0, 9)]
 
 
 def message_to_screen(message, color, font_size, x, y):
@@ -212,14 +209,13 @@ def message_to_screen(message, color, font_size, x, y):
 # Explosion images
 
 def laser_explosion():
-    laser_explosion_img = []  # When the bullet hit the meteor
-    for explosion0 in range(1, 9):
-        img = get_image("spaceshipexplosionFile/000{}.png".format(explosion0), WHITE)
-        laser_explosion_img.append(img)
-    for explosion1 in range(0, 2):
-        img = get_image("spaceshipexplosionFile/001{}.png".format(explosion1), WHITE)
-        laser_explosion_img.append(img)
-    return laser_explosion_img
+    """
+    When the bullet hits the meteor
+    :return: a list of explosion images.
+    """
+    img_path = "spaceshipexplosionFile/00{}.png"
+    return [get_image(img_path.format("0" + str(i)), WHITE) if i <= 9 else get_image(img_path.format(i), WHITE)
+            for i in range(1, 28)]
 
 
 def small_explosion():
@@ -237,35 +233,9 @@ def small_explosion():
 
 
 def ship_explosion():
-    ship_explosion_img = []  # Final explosion of the ship when it loses health
-    for explosion000 in range(1, 9):
-        img = get_image("finalexplosionFile/000{}.png".format(explosion000), WHITE)
-        ship_explosion_img.append(img)
-    for explosion1 in range(0, 9):
-        img = get_image("finalexplosionFile/001{}.png".format(explosion1), WHITE)
-        ship_explosion_img.append(img)
-    for explosion2 in range(0, 9):
-        img = get_image("finalexplosionFile/002{}.png".format(explosion2), WHITE)
-        ship_explosion_img.append(img)
-    for explosion3 in range(0, 9):
-        img = get_image("finalexplosionFile/003{}.png".format(explosion3), WHITE)
-        ship_explosion_img.append(img)
-    for explosion4 in range(0, 9):
-        img = get_image("finalexplosionFile/004{}.png".format(explosion4), WHITE)
-        ship_explosion_img.append(img)
-    for explosion5 in range(0, 9):
-        img = get_image("finalexplosionFile/005{}.png".format(explosion5), WHITE)
-        ship_explosion_img.append(img)
-    for explosion6 in range(0, 9):
-        img = get_image("finalexplosionFile/006{}.png".format(explosion6), WHITE)
-        ship_explosion_img.append(img)
-    for explosion7 in range(0, 9):
-        img = get_image("finalexplosionFile/007{}.png".format(explosion7), WHITE)
-        ship_explosion_img.append(img)
-    for explosion8 in range(0, 1):
-        img = get_image("finalexplosionFile/008{}.png".format(explosion8), WHITE)
-        ship_explosion_img.append(img)
-    return ship_explosion_img
+    img_path = "finalexplosionFile/00{}.png"
+    return [get_image(img_path.format("0" + str(i)), WHITE) if i <= 9 else get_image(img_path.format(i), WHITE)
+            for i in range(1, 79)]
 
 
 # Images:
@@ -281,7 +251,7 @@ all_bullets = pygame.sprite.Group()  # Group all the bullets together
 player = Player()
 all_sprites.add(player)
 
-for i in range(9):
+for _ in range(9):
     """Cretes 9 meteors."""
     spawn_new_meteor()
 
@@ -313,7 +283,7 @@ while running:
         explosion = Explosion(laser_explosion(), collision.rect.center)
         all_sprites.add(explosion)
         spawn_new_meteor()
-        score += 70 - collision.radius
+        score += 80 - collision.radius
 
     # Draw to the screen
     screen.blit(background, background_rect)
