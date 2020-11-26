@@ -34,7 +34,7 @@ class MainMenu(Menu):
             self.game.check_events()
             self.check_input()
             self.game.display.fill(self.game.BLACK)
-            self.game.draw_text('Main Menu', 70, self.game.DISPLAY_W/2, 70)
+            self.game.draw_text('Main Menu', 70, self.game.DISPLAY_W / 2, 70)
             self.game.draw_text("Start Game", 50, self.startx, self.starty)
             self.game.draw_text("Options", 50, self.optionsx, self.optionsy)
             self.game.draw_text("Credits", 50, self.creditsx, self.creditsy)
@@ -58,14 +58,17 @@ class MainMenu(Menu):
                 self.state = 'Start'
         elif self.game.UP_KEY:
             if self.state == 'Start':
-                self.cursor_rect.midtop = (self.creditsx + self.offset, self.creditsy)
-                self.state = 'Credits'
-            elif self.state == 'Options':
-                self.cursor_rect.midtop = (self.startx + self.offset, self.starty)
-                self.state = 'Start'
+                self.cursor_rect.midtop = (self.quitx + self.offset, self.quity)
+                self.state = 'Quit'
             elif self.state == 'Credits':
                 self.cursor_rect.midtop = (self.optionsx + self.offset, self.optionsy)
                 self.state = 'Options'
+            elif self.state == 'Options':
+                self.cursor_rect.midtop = (self.startx + self.offset, self.starty)
+                self.state = 'Start'
+            elif self.state == 'Quit':
+                self.cursor_rect.midtop = (self.creditsx + self.offset, self.creditsy)
+                self.state = 'Credits'
 
     def check_input(self):
         self.move_cursor()
@@ -113,8 +116,11 @@ class OptionsMenu(Menu):
                 self.state = 'Volume'
                 self.cursor_rect.midtop = (self.volx + self.offset, self.voly)
         elif self.game.START_KEY:
-            # TODO: Create a Volume Menu and a Controls Menu
-            pass
+            if self.state == 'Volume':
+                self.game.current_menu = self.game.volume
+            elif self.state == 'Controls':
+                self.game.current_menu = self.game.controls
+            self.run_display = False
 
 
 class CreditsMenu(Menu):
@@ -131,4 +137,42 @@ class CreditsMenu(Menu):
             self.game.display.fill(self.game.BLACK)
             self.game.draw_text('Credits', 50, self.mid_w, self.mid_h)
             self.game.draw_text('Made by LACROIX Baptiste', 40, self.mid_w, self.mid_h + 70)
+            self.blit_screen()
+
+
+class ControlsMenu(Menu):
+
+    def __init__(self, game):
+        Menu.__init__(self, game)
+
+    def display_menu(self):
+        self.run_display = True
+        while self.run_display:
+            self.game.check_events()
+            if self.game.START_KEY or self.game.BACK_KEY:
+                self.game.current_menu = self.game.main_menu
+                self.run_display = False
+            self.game.display.fill(self.game.BLACK)
+            self.game.draw_text('Controls', 70, self.game.DISPLAY_W / 2, 70)
+            self.game.draw_text('Gauche :', 40, self.mid_w, self.mid_h - 200)
+            self.game.draw_text('Droite :', 40, self.mid_w, self.mid_h - 50)
+            self.game.draw_text('Tir :', 40, self.mid_w, self.mid_h + 100)
+            self.blit_screen()
+
+
+class VolumeMenu(Menu):
+    def __init__(self, game):
+        Menu.__init__(self, game)
+
+    def display_menu(self):
+        self.run_display = True
+        while self.run_display:
+            self.game.check_events()
+            if self.game.START_KEY or self.game.BACK_KEY:
+                self.game.current_menu = self.game.main_menu
+                self.run_display = False
+            self.game.display.fill(self.game.BLACK)
+            self.game.draw_text('Volume', 70, self.game.DISPLAY_W / 2, 70)
+            self.game.draw_text('Volume de son :', 40, self.mid_w, self.mid_h - 200)
+            self.game.draw_text('volume explosion :', 40, self.mid_w, self.mid_h - 50)
             self.blit_screen()

@@ -1,5 +1,5 @@
 import pygame
-from menu import MainMenu, OptionsMenu, CreditsMenu
+from menu import MainMenu, OptionsMenu, CreditsMenu, ControlsMenu, VolumeMenu
 import random
 from os import path
 
@@ -16,11 +16,11 @@ pygame.init()
 # pygame.mixer.init(44100, -16, 2, 2048)  # initialize for sounds
 # Make the music running
 pygame.mixer.music.load("sound/backgroundmusic.mp3")
-pygame.mixer.music.set_volume(0.15)
+pygame.mixer.music.set_volume(0.05)
 pygame.mixer.music.play(-1)
-WITDH = 600
+WIDTH = 600
 HEIGTH = 800
-screen = pygame.display.set_mode((WITDH, HEIGTH))
+screen = pygame.display.set_mode((WIDTH, HEIGTH))
 pygame.display.set_caption("Space Shooter !")
 clock = pygame.time.Clock()
 FPS = 144
@@ -42,7 +42,7 @@ class Player(pygame.sprite.Sprite):
         self.surface = self.image.get_width()
         self.radius = int(self.surface * .85 / 2)
         # pygame.draw.circle(self.image, GREEN, self.rect.center, self.radius)
-        self.rect.centerx = int(WITDH / 2)
+        self.rect.centerx = int(WIDTH / 2)
         self.rect.bottom = HEIGTH - 20
         self.speed_x = 0
         self.speed = 3
@@ -56,7 +56,7 @@ class Player(pygame.sprite.Sprite):
         """move the ship off the screen for a certain time"""
         self.hide_ship_timer = pygame.time.get_ticks()
         self.ship_is_hidden = True
-        self.rect.centerx = int(WITDH / 2)
+        self.rect.centerx = int(WIDTH / 2)
         self.rect.y = HEIGTH + 100
 
     def shoot_bullet(self):
@@ -70,8 +70,8 @@ class Player(pygame.sprite.Sprite):
 
     def boundary(self):
         """ Boundary of the ship to the size of the screen"""
-        if self.rect.right > WITDH:
-            self.rect.right = WITDH
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
 
@@ -88,10 +88,10 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.speed_x
 
     def update(self, *args):
-        """Check if the ship is currently off the screen. Respawn after 1.5 seconds."""
+        """Check if the ship is currently off the screen. Respawn after 3.5 seconds."""
         if self.ship_is_hidden and pygame.time.get_ticks() - self.hide_ship_timer > 3500:
             self.ship_is_hidden = False
-            self.rect.centerx = int(WITDH / 2)
+            self.rect.centerx = int(WIDTH / 2)
             self.rect.bottom = HEIGTH - 10
         self.movement()
         self.boundary()
@@ -108,7 +108,7 @@ class Meteor(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.surface = self.image.get_width()
         self.radius = int(self.surface * .85 / 2)
-        self.rect.x = random.randrange(0, WITDH - self.surface)
+        self.rect.x = random.randrange(0, WIDTH - self.surface)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
         self.speed_x = random.randrange(-3, 3)
@@ -130,13 +130,13 @@ class Meteor(pygame.sprite.Sprite):
             self.rect.center = old_center
 
     def spawn_new_meteor(self):
-        self.rect.x = random.randrange(0, WITDH - self.surface)
+        self.rect.x = random.randrange(0, WIDTH - self.surface)
         self.rect.y = random.randrange(-150, -100)
         self.speed_y = random.randrange(1, 3)
         self.speed_x = random.randrange(-3, 3)
 
     def boundary(self):
-        if self.rect.left > WITDH + 5 or self.rect.right < -5 or self.rect.top > HEIGTH + 5:
+        if self.rect.left > WIDTH + 5 or self.rect.right < -5 or self.rect.top > HEIGTH + 5:
             self.spawn_new_meteor()
 
     def update(self, *args):
@@ -207,6 +207,8 @@ class Game:
         self.main_menu = MainMenu(self)
         self.options = OptionsMenu(self)
         self.credits = CreditsMenu(self)
+        self.controls = ControlsMenu(self)
+        self.volume = VolumeMenu(self)
         self.current_menu = self.main_menu
 
     def game_loop(self):
@@ -263,9 +265,9 @@ class Game:
             # Draw to the screen
             screen.blit(background, background_rect)
             all_sprites.draw(screen)
-            message_to_screen("Score : " + str(Game.score), RED, 24, int(WITDH / 2), 10)
+            message_to_screen("Score : " + str(Game.score), RED, 24, int(WIDTH / 2), 10)
             message_to_screen("Health : " + str(player.health), RED, 24, 50, 10)
-            message_to_screen("Lives : " + str(player.lives), RED, 24, WITDH - 100, 10)
+            message_to_screen("Lives : " + str(player.lives), RED, 24, WIDTH - 100, 10)
 
             # Update after drawing everything to the screen:
             pygame.display.update()
@@ -279,7 +281,7 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     self.START_KEY = True
-                elif event.key == pygame.K_BACKSPACE:
+                elif event.key == pygame.K_ESCAPE:
                     self.BACK_KEY = True
                 elif event.key == pygame.K_DOWN:
                     self.DOWN_KEY = True
