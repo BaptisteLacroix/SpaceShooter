@@ -10,7 +10,29 @@
 
 ​	
 
-### Images
+# Images
 
-![screenshot of the game](./img/Readme/SharedScreenshot.jpg)
+
+
+#### Menu
+
+<img src="./img/Readme/menumain.jpg" alt="Image Menu"/>
+
+#### Gameplay
+
+
+
+<img src="./img/Readme/gameplay.gif" alt="Image Menu"/>
+
+
+
+#### Credits
+
+<img src="./img/Readme/credits.jpg" alt="Image Menu"/>
+
+
+
+
+
+
 

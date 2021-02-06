@@ -135,8 +135,12 @@ class CreditsMenu(Menu):
                 self.game.current_menu = self.game.main_menu
                 self.run_display = False
             self.game.display.fill(self.game.BLACK)
-            self.game.draw_text('Credits', 50, self.mid_w, self.mid_h)
-            self.game.draw_text('Made by LACROIX Baptiste', 40, self.mid_w, self.mid_h + 70)
+            self.game.draw_text('Credits', 50, self.mid_w, self.mid_h - 300)
+            self.game.draw_text('Made by LACROIX Baptiste', 40, self.mid_w, self.mid_h - 200)
+            self.game.draw_text('With the help of:', 50, self.mid_w, self.mid_h - 100)
+            self.game.draw_text('Mr.Chatergoon (Youtube)', 40, self.mid_w, self.mid_h)
+            self.game.draw_text('Christian Duenas (Youtube)', 40, self.mid_w, self.mid_h + 100)
+            self.game.draw_text('Thank you so much !', 50, self.mid_w, self.mid_h + 200)
             self.blit_screen()
 
 
@@ -155,9 +159,58 @@ class ControlsMenu(Menu):
             self.game.display.fill(self.game.BLACK)
             self.game.draw_text('Controls', 70, self.game.DISPLAY_W / 2, 70)
             self.game.draw_text('Gauche :', 40, self.mid_w, self.mid_h - 200)
+            inputBox = InputBox(self.game.font, 600, 100, 140, 32)
             self.game.draw_text('Droite :', 40, self.mid_w, self.mid_h - 50)
             self.game.draw_text('Tir :', 40, self.mid_w, self.mid_h + 100)
+            inputBox.update()
+            inputBox.draw(self.game.window)
             self.blit_screen()
+
+
+class InputBox:
+
+    COLOR_INACTIVE = pygame.Color('lightskyblue3')
+    COLOR_ACTIVE = pygame.Color('dodgerblue2')
+
+    def __init__(self, FONT, x, y, w, h, text=''):
+        self.FONT = FONT
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = InputBox.COLOR_INACTIVE
+        self.text = text
+        self.txt_surface = FONT.render(text, True, self.color)
+        self.active = False
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.rect.collidepoint(event.pos):
+                self.active = not self.active
+            else:
+                self.active = False
+            # Change the current color of the input box.
+            self.color = InputBox.COLOR_ACTIVE if self.active else InputBox.COLOR_INACTIVE
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    output = self.text
+                    self.text = ''
+                    self.txt_surface = self.FONT.render(self.text, True, self.color)
+                    return output
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                # Re-render the text.
+                self.txt_surface = self.FONT.render(self.text, True, self.color)
+
+    def update(self):
+        # Resize the box if the text is too long.
+        width = max(200, self.txt_surface.get_width() + 10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
+        pygame.draw.rect(screen, self.color, self.rect, 2)
 
 
 class VolumeMenu(Menu):
